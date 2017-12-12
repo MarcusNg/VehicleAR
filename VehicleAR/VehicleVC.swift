@@ -8,12 +8,16 @@
 
 import UIKit
 import ARKit
+import CoreMotion
 
 class VehicleVC: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet weak var sceneView: ARSCNView!
     
     let configuration = ARWorldTrackingConfiguration()
+    let motionManager = CMMotionManager()
+    
+    var vehicle = SCNPhysicsVehicle()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,6 +25,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         self.configuration.planeDetection = .horizontal
         self.sceneView.session.run(configuration)
         self.sceneView.delegate = self
+        self.setupAccelerometer()
     }
 
     override func didReceiveMemoryWarning() {
@@ -36,14 +41,27 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         let currentPositionOfCamera = orientation + location
         
         let scene = SCNScene(named: "Car-Scene.scn")
-        let frame = (scene?.rootNode.childNode(withName: "frame", recursively: false))!
-        frame.position = currentPositionOfCamera
+        let chassis = (scene?.rootNode.childNode(withName: "chassis", recursively: false))!
+        chassis.position = currentPositionOfCamera
+        
+        // Wheels
+        let frontLeftWheel = (chassis.childNode(withName: "frontLeftParent", recursively: false))!
+        let frontRightWheel = (chassis.childNode(withName: "frontRightParent", recursively: false))!
+        let rearLeftWheel = (chassis.childNode(withName: "rearLeftParent", recursively: false))!
+        let rearRightWheel = (chassis.childNode(withName: "rearRightParent", recursively: false))!
+        
+        let v_frontLeftWheel = SCNPhysicsVehicleWheel(node: frontLeftWheel)
+        let v_frontRightWheel = SCNPhysicsVehicleWheel(node: frontRightWheel)
+        let v_rearLeftWheel = SCNPhysicsVehicleWheel(node: rearLeftWheel)
+        let v_rearRightWheel = SCNPhysicsVehicleWheel(node: rearRightWheel)
         
         // Gravity
-        let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: frame, options: [SCNPhysicsShape.Option.keepAsCompound: true]))
-        frame.physicsBody = body
+        let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: chassis, options: [SCNPhysicsShape.Option.keepAsCompound: true]))
+        chassis.physicsBody = body
         
-        self.sceneView.scene.rootNode.addChildNode(frame)
+        self.vehicle = SCNPhysicsVehicle(chassisBody: chassis.physicsBody!, wheels: [v_rearRightWheel, v_rearLeftWheel, v_frontRightWheel, v_frontLeftWheel])
+        self.sceneView.scene.physicsWorld.addBehavior(self.vehicle)
+        self.sceneView.scene.rootNode.addChildNode(chassis)
     }
     
     func createConcrete(planeAnchor: ARPlaneAnchor) -> SCNNode {
@@ -57,6 +75,25 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         concreteNode.physicsBody = staticBody
         
         return concreteNode
+    }
+    
+    func setupAccelerometer() {
+        if motionManager.isAccelerometerAvailable {
+            motionManager.accelerometerUpdateInterval = 1/60
+            motionManager.startAccelerometerUpdates(to: .main, withHandler: { (accelerometerData, error) in
+                if let error = error {
+                    print(error.localizedDescription)
+                    return
+                }
+                self.accelerometerDidChange(acceleration: accelerometerData!.acceleration)
+            })
+        } else {
+            print("Accelerometer not available")
+        }
+    }
+    
+    func accelerometerDidChange(acceleration: CMAcceleration) {
+        
     }
 }
 
