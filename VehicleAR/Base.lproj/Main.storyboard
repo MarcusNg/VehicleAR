@@ -10,10 +10,10 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--FloorVC-->
+        <!--VehicleVC-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="FloorVC" customModule="FloorTrackingAR" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="VehicleVC" customModule="VehicleAR" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -21,18 +21,32 @@
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="NvN-QE-1hD">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </arscnView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kWn-Sg-bly">
+                                <rect key="frame" x="20" y="617" width="50" height="30"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="30" id="Bwc-ur-AHu"/>
+                                    <constraint firstAttribute="width" constant="50" id="Lxv-gS-7Ou"/>
+                                </constraints>
+                                <state key="normal" title="Add"/>
+                                <connections>
+                                    <action selector="addCarBtnPressed:" destination="BYZ-38-t0r" eventType="touchUpInside" id="rZb-mp-QPx"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="NvN-QE-1hD" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="B7c-St-5vu"/>
                             <constraint firstItem="NvN-QE-1hD" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="RVY-fc-vzH"/>
                             <constraint firstItem="NvN-QE-1hD" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Sp8-z7-PTp"/>
+                            <constraint firstItem="kWn-Sg-bly" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="UyK-Ux-ovT"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="kWn-Sg-bly" secondAttribute="bottom" constant="20" id="p4i-As-xkk"/>
                             <constraint firstItem="NvN-QE-1hD" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="ukc-Hv-Wum"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
-                        <outlet property="sceneView" destination="NvN-QE-1hD" id="hJ5-Ca-fm7"/>
+                        <outlet property="sceneView" destination="NvN-QE-1hD" id="uE2-OJ-mPu"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
