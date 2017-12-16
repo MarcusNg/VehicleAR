@@ -18,6 +18,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
     let motionManager = CMMotionManager()
     
     var vehicle = SCNPhysicsVehicle()
+    var orientation: CGFloat = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,6 +27,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         self.sceneView.session.run(configuration)
         self.sceneView.delegate = self
         self.setupAccelerometer()
+        self.sceneView.showsStatistics = true
     }
 
     override func didReceiveMemoryWarning() {
@@ -42,7 +44,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         
         let scene = SCNScene(named: "Car-Scene.scn")
         let chassis = (scene?.rootNode.childNode(withName: "chassis", recursively: false))!
-        chassis.position = currentPositionOfCamera
+        
         
         // Wheels
         let frontLeftWheel = (chassis.childNode(withName: "frontLeftParent", recursively: false))!
@@ -56,6 +58,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         let v_rearRightWheel = SCNPhysicsVehicleWheel(node: rearRightWheel)
         
         // Gravity
+        chassis.position = currentPositionOfCamera
         let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: chassis, options: [SCNPhysicsShape.Option.keepAsCompound: true]))
         chassis.physicsBody = body
         
@@ -93,7 +96,13 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
     }
     
     func accelerometerDidChange(acceleration: CMAcceleration) {
-        
+        self.orientation = CGFloat(acceleration.y)
+        // Fix landscape orientation
+        if acceleration.x > 0 {
+            self.orientation = -CGFloat(acceleration.y)
+        } else {
+            self.orientation = CGFloat(acceleration.y)
+        }
     }
 }
 
@@ -103,12 +112,12 @@ extension VehicleVC {
         guard let planeAnchor = anchor as? ARPlaneAnchor else { return }
         let concreteNode = createConcrete(planeAnchor: planeAnchor)
         node.addChildNode(concreteNode)
-        print("new flat surface detected, new ARPlaneAnchor added")
+//        print("new flat surface detected, new ARPlaneAnchor added")
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard let planeAnchor = anchor as? ARPlaneAnchor else { return }
-        print("updating floor's anchor...")
+//        print("updating floor's anchor...")
         node.enumerateChildNodes { (childNode, _) in
             childNode.removeFromParentNode()
         }
@@ -122,6 +131,11 @@ extension VehicleVC {
             childNode.removeFromParentNode()
         }
     }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
+        self.vehicle.setSteeringAngle(orientation, forWheelAt: 2)
+        self.vehicle.setSteeringAngle(orientation, forWheelAt: 3)
+    }
 
 }
 
@@ -132,8 +146,6 @@ extension Int {
 }
 
 func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
-    
     return SCNVector3Make(left.x + right.x, left.y + right.y, left.z + right.z)
-    
 }
 
