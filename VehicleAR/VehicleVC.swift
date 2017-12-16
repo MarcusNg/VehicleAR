@@ -19,6 +19,8 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
     
     var vehicle = SCNPhysicsVehicle()
     var orientation: CGFloat = 0
+    var touched: Int = 0
+    var accelerationValues = [UIAccelerationValue(0), UIAccelerationValue(0)]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,6 +37,15 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         // Dispose of any resources that can be recreated.
     }
 
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let _ = touches.first else { return }
+        self.touched += touches.count
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.touched = 0
+    }
+    
     @IBAction func addCarBtnPressed(_ sender: Any) {
         guard let pointOfView = sceneView.pointOfView else { return }
         let transform = pointOfView.transform
@@ -61,7 +72,7 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
         chassis.position = currentPositionOfCamera
         let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: chassis, options: [SCNPhysicsShape.Option.keepAsCompound: true]))
         chassis.physicsBody = body
-        
+        body.mass = 1
         self.vehicle = SCNPhysicsVehicle(chassisBody: chassis.physicsBody!, wheels: [v_rearRightWheel, v_rearLeftWheel, v_frontRightWheel, v_frontLeftWheel])
         self.sceneView.scene.physicsWorld.addBehavior(self.vehicle)
         self.sceneView.scene.rootNode.addChildNode(chassis)
@@ -96,13 +107,19 @@ class VehicleVC: UIViewController, ARSCNViewDelegate {
     }
     
     func accelerometerDidChange(acceleration: CMAcceleration) {
-        self.orientation = CGFloat(acceleration.y)
+        self.accelerationValues[1] = filtered(currentAcceleration: accelerationValues[1], updatedAcceleration: acceleration.y)
+        self.accelerationValues[0] = filtered(currentAcceleration: accelerationValues[0], updatedAcceleration: acceleration.x)
         // Fix landscape orientation
-        if acceleration.x > 0 {
-            self.orientation = -CGFloat(acceleration.y)
+        if self.accelerationValues[0] > 0 {
+            self.orientation = -CGFloat(accelerationValues[1])
         } else {
-            self.orientation = CGFloat(acceleration.y)
+            self.orientation = CGFloat(accelerationValues[1])
         }
+    }
+    
+    func filtered(currentAcceleration: Double, updatedAcceleration: Double) -> Double {
+        let kfiltertingFactor = 0.5
+        return updatedAcceleration * kfiltertingFactor + currentAcceleration * (1 - kfiltertingFactor)
     }
 }
 
@@ -133,8 +150,24 @@ extension VehicleVC {
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
-        self.vehicle.setSteeringAngle(orientation, forWheelAt: 2)
-        self.vehicle.setSteeringAngle(orientation, forWheelAt: 3)
+        var engineForce: CGFloat = 0
+        var brakingForce: CGFloat = 0
+        self.vehicle.setSteeringAngle(-orientation, forWheelAt: 2)
+        self.vehicle.setSteeringAngle(-orientation, forWheelAt: 3)
+        if self.touched == 1 {
+            engineForce = 5
+        } else if self.touched == 2 {
+            engineForce = -5
+        } else if self.touched == 3 {
+            brakingForce = 100
+        } else {
+            engineForce = 0
+        }
+        self.vehicle.applyEngineForce(engineForce, forWheelAt: 0)
+        self.vehicle.applyEngineForce(engineForce, forWheelAt: 1)
+        self.vehicle.applyBrakingForce(brakingForce, forWheelAt: 0)
+        self.vehicle.applyBrakingForce(brakingForce, forWheelAt: 1)
+
     }
 
 }
